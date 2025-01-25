@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/*",
+    "src/cache/memCache.ts",
+    "src/cache/ICache.ts",
+    "src/cache/redisCache.ts"
+  ]
+}
