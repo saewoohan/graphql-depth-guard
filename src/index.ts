@@ -1,11 +1,5 @@
-import { createServer } from 'node:http';
-import { createYoga } from 'graphql-yoga';
-import { schema } from './schema';
+import { depthLimitDirective } from './depthDirective';
 
-const yoga = createYoga({ schema });
+export * from './cache';
 
-const server = createServer(yoga);
-
-server.listen(4000, () => {
-  console.info('Server is running on http://localhost:4000/graphql');
-});
+export default depthLimitDirective;

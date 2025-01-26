@@ -1,4 +1,3 @@
-import { CacheFactory } from './cache/cacheFactory';
 import {
   defaultFieldResolver,
   GraphQLResolveInfo,
@@ -6,26 +5,20 @@ import {
   ConstValueNode,
 } from 'graphql';
 import { mapSchema, MapperKind } from '@graphql-tools/utils';
+import { MemoryCache } from './cache/memCache';
 import { ICache } from './cache/ICache';
+import { generateQueryKey } from './cache/keyGenerator';
 
-type CacheType = 'memory' | 'redis';
-
-type DepthLimitDirectiveOptions = {
-  defaultErrorMessage?: string; // Default error message
+export type DepthLimitDirectiveOptions = {
   globalLimit?: number; // Global depth limit
   errorHandler?: (info: {
     depth: number;
     limit: number;
     message?: string;
     isGlobalLimit: boolean;
+    info: GraphQLResolveInfo;
   }) => Error; // Error handling callback
-  cacheType?: CacheType; // Cache type (memory or redis)
-  cacheOption?: {
-    // Redis-specific options (required if cacheType is redis)
-    host: string;
-    port: number;
-    ttl?: number;
-  };
+  store?: ICache; // Custom store (e.g., RedisStore or MemoryStore)
 };
 
 /**
@@ -72,26 +65,12 @@ const calculateDepth = (info: GraphQLResolveInfo): number => {
  * @param options - Options for configuring the depth limit directive.
  * @returns The GraphQL depth limit directive with the required configuration.
  */
-export const depthLimitDirective = (options: DepthLimitDirectiveOptions) => {
-  const cacheType = options.cacheType ?? 'memory';
-  const cache: ICache<number> | null = CacheFactory.create<number>(
-    cacheType === 'memory'
-      ? {
-          type: 'memory',
-          options: { ttl: options.cacheOption?.ttl ?? 60 * 1000 },
-        }
-      : {
-          type: 'redis',
-          options: options.cacheOption ?? {
-            host: 'localhost',
-            port: 6379,
-            ttl: 60 * 1000,
-          },
-        },
-  );
+export const depthLimitDirective = (options?: DepthLimitDirectiveOptions) => {
+  // Use the provided store or fall back to MemoryCache
+  const cache: ICache = options?.store ?? new MemoryCache(60 * 1000);
 
   /**
-   * Calculates the depth of a query with caching.
+   * Calculates the depth of a query with caching based on the entire query.
    * @param info - The GraphQLResolveInfo object.
    * @returns The calculated depth of the query.
    */
@@ -99,23 +78,29 @@ export const depthLimitDirective = (options: DepthLimitDirectiveOptions) => {
     info: GraphQLResolveInfo,
   ): Promise<number> => {
     if (!cache) {
-      // If caching is disabled, calculate and return the depth directly
       return calculateDepth(info);
     }
 
-    const queryKey = JSON.stringify({
-      operation: info.operation,
-      variables: info.variableValues,
-    });
+    // Safely extract the operation name or use 'anonymous'
+    const operationName = info.operation.name?.value ?? 'anonymous';
 
-    // Retrieve cached depth if available
+    // Generate a unique and compact query key
+    const queryKey = generateQueryKey(
+      operationName,
+      info.variableValues,
+      info.operation.selectionSet,
+    );
+
+    // Check for a cached depth value
     const cachedDepth = await cache.get(queryKey);
     if (cachedDepth !== null) {
       return cachedDepth;
     }
 
-    // Calculate the depth and store it in the cache
+    // Calculate the depth of the query
     const depth = calculateDepth(info);
+
+    // Store the depth in the cache
     await cache.set(queryKey, depth);
 
     return depth;
@@ -131,6 +116,7 @@ export const depthLimitDirective = (options: DepthLimitDirectiveOptions) => {
           const originalResolve = fieldConfig.resolve || defaultFieldResolver;
 
           const directives = fieldConfig.astNode?.directives;
+
           if (directives) {
             const depthLimitDirective = directives.find(
               (d) => d.name.value === 'depthLimit',
@@ -160,11 +146,15 @@ export const depthLimitDirective = (options: DepthLimitDirectiveOptions) => {
           }
 
           fieldConfig.resolve = async function (source, args, context, info) {
+            if (!context._calculatedDepth) {
+              context._calculatedDepth = await calculateDepthWithCache(info);
+            }
+
+            const depth = context._calculatedDepth;
+
             const directiveConfig = fieldConfig.extensions?.depthLimit as
               | { limit: number; message?: string }
               | undefined;
-
-            const depth = await calculateDepthWithCache(info);
 
             if (directiveConfig) {
               if (depth > directiveConfig.limit) {
@@ -172,12 +162,13 @@ export const depthLimitDirective = (options: DepthLimitDirectiveOptions) => {
                   directiveConfig.message ||
                   `Response depth exceeds limit of ${directiveConfig.limit}`;
 
-                if (options.errorHandler) {
+                if (options?.errorHandler) {
                   throw options.errorHandler({
                     depth,
                     limit: directiveConfig.limit,
                     message: errorMessage,
                     isGlobalLimit: false,
+                    info,
                   });
                 }
 
@@ -188,11 +179,9 @@ export const depthLimitDirective = (options: DepthLimitDirectiveOptions) => {
                   },
                 });
               }
-            } else if (options.globalLimit) {
+            } else if (options?.globalLimit) {
               if (depth > options.globalLimit) {
-                const errorMessage =
-                  options.defaultErrorMessage ||
-                  `Response depth exceeds global limit of ${options.globalLimit}`;
+                const errorMessage = `Response depth exceeds global limit of ${options.globalLimit}`;
 
                 if (options.errorHandler) {
                   throw options.errorHandler({
@@ -200,6 +189,7 @@ export const depthLimitDirective = (options: DepthLimitDirectiveOptions) => {
                     limit: options.globalLimit,
                     message: errorMessage,
                     isGlobalLimit: true,
+                    info,
                   });
                 }
 

@@ -1,5 +1,5 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { depthLimitDirective } from './depthDirective';
+import depthLimitDirective, { MemoryCache } from '../src';
 
 // Schema definition
 const typeDefs = `
@@ -10,7 +10,7 @@ const typeDefs = `
 
   type Mutation {
     createItem(data: ItemInput!): ItemResponse @depthLimit(limit: 5)
-    deepMutation(data: DeepInput!): DeepResponse @depthLimit(limit: 2)
+    deepMutation(data: DeepInput!): DeepResponse
   }
 
   type DeepType {
@@ -80,15 +80,28 @@ const resolvers = {
   },
 };
 
-// Depth limit directive configuration
-const depthDirective = depthLimitDirective({
-  globalLimit: 6, // Global depth limit
-});
+export const initSchema = async () => {
+  const depthDirective = depthLimitDirective({
+    globalLimit: 5,
+    store: new MemoryCache(60 * 1000),
+  });
 
-// Schema creation and transformation
-export const schema = depthDirective.transformer(
-  makeExecutableSchema({
-    typeDefs: [depthDirective.typeDefs, typeDefs],
-    resolvers,
-  }),
-);
+  // Create schema with depth limit directive applied
+  const schema = depthDirective.transformer(
+    makeExecutableSchema({
+      typeDefs: [depthDirective.typeDefs, typeDefs],
+      resolvers,
+    }),
+  );
+
+  console.log('GraphQL Schema with Depth Limit Directive initialized.');
+
+  // Clean up Redis connection on server shutdown
+  process.on('SIGINT', async () => {
+    console.log('Closing Redis connection...');
+    console.log('Redis connection closed.');
+    process.exit(0);
+  });
+
+  return schema;
+};

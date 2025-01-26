@@ -1,16 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
+    "target": "ES6",
     "module": "CommonJS",
+    "outDir": "./dist",
+    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "./dist"
+    "declaration": true
   },
-  "include": [
-    "src/*",
-    "src/cache/memCache.ts",
-    "src/cache/ICache.ts",
-    "src/cache/redisCache.ts"
-  ]
+  "include": ["src/**/*.ts"]
 }
