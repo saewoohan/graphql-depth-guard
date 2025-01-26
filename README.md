@@ -27,7 +27,7 @@ Query depth is determined by the structure of the response fields, including nes
 
 ### Example Queries with Depth Calculation
 
-#### Depth: 1
+#### Depth: 0
 
 ```graphql
 query {
@@ -35,7 +35,7 @@ query {
 }
 ```
 
-#### Depth: 2
+#### Depth: 1
 
 ```graphql
 query {
@@ -45,7 +45,7 @@ query {
 }
 ```
 
-#### Depth: 3 (with nested fields)
+#### Depth: 2 (with nested fields)
 
 ```graphql
 query {
@@ -58,7 +58,7 @@ query {
 }
 ```
 
-#### Depth: 3 (with fragments)
+#### Depth: 2 (with fragments)
 
 ```graphql
 fragment postInfo on Post {
@@ -113,13 +113,13 @@ query {
 
 **Depth Calculation:**
 
-- `viewer` (depth 1)
-- `users` (depth 2)
-- `posts` (depth 3)
-- `postInfo` (depth 4 for `title` and `comments`)
-- `commentInfo` (depth 5 for `content` and `author`)
+- `viewer` (depth 0)
+- `users` (depth 1)
+- `posts` (depth 2)
+- `postInfo` (depth 3 for `title` and `comments`)
+- `commentInfo` (depth 4 for `content` and `author`)
 
-**Total Depth:** 5
+**Total Depth:** 4
 
 ---
 
