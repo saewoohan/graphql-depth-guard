@@ -4,8 +4,8 @@ export class MemoryCache implements ICache {
   private store: Map<string, { value: number; expiresAt: number }> = new Map();
   private ttl: number;
 
-  constructor(ttl: number) {
-    this.ttl = ttl;
+  constructor(ttl?: number) {
+    this.ttl = ttl ?? 60000;
   }
 
   async set(key: string, value: number): Promise<void> {

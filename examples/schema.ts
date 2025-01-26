@@ -83,7 +83,7 @@ const resolvers = {
 export const initSchema = async () => {
   const depthDirective = depthLimitDirective({
     globalLimit: 5,
-    store: new MemoryCache(60 * 1000),
+    store: new MemoryCache(),
   });
 
   // Create schema with depth limit directive applied

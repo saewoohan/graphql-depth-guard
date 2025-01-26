@@ -5,7 +5,6 @@ import {
   ConstValueNode,
 } from 'graphql';
 import { mapSchema, MapperKind } from '@graphql-tools/utils';
-import { MemoryCache } from './cache/memCache';
 import { ICache } from './cache/ICache';
 import { generateQueryKey } from './cache/keyGenerator';
 
@@ -67,7 +66,7 @@ const calculateDepth = (info: GraphQLResolveInfo): number => {
  */
 export const depthLimitDirective = (options?: DepthLimitDirectiveOptions) => {
   // Use the provided store or fall back to MemoryCache
-  const cache: ICache = options?.store ?? new MemoryCache(60 * 1000);
+  const cache: ICache | undefined = options?.store;
 
   /**
    * Calculates the depth of a query with caching based on the entire query.
