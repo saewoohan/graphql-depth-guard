@@ -5,11 +5,15 @@
   "types": "dist/src/index.d.ts",
   "license": "MIT",
   "description": "A lightweight library to limit the depth of GraphQL queries with optional caching.",
+  "author": "saewoohan <hso2341@naver.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/saewoohan/graphql-depth-guard.git"
   },
-  "author": "saewoohan <hso2341@naver.com>",
+  "bugs": {
+    "url": "https://github.com/saewoohan/graphql-depth-guard/issues"
+  },
+  "homepage": "https://github.com/saewoohan/graphql-depth-guard#readme",
   "keywords": [
     "graphql",
     "depth",
@@ -19,7 +23,7 @@
     "query"
   ],
   "scripts": {
-    "dev": "ts-node src/index.ts",
+    "dev": "ts-node examples/index.ts",
     "build": "tsc",
     "test": "jest"
   },
