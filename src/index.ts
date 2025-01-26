@@ -1,4 +1,4 @@
-import { depthLimitDirective } from './depthDirective';
+import { depthLimitDirective } from './directives/depthDirective';
 
 export * from './cache';
 

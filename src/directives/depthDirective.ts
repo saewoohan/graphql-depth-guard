@@ -5,9 +5,9 @@ import {
   ConstValueNode,
 } from 'graphql';
 import { mapSchema, MapperKind } from '@graphql-tools/utils';
-import { ICache } from './cache/ICache';
-import { generateQueryKey } from './cache/keyGenerator';
-import { calculateDepth } from './calculateDepth';
+import { ICache } from '../cache/ICache';
+import { generateQueryKey } from '../cache/keyGenerator';
+import { calculateDepth } from '../utils/calculateDepth';
 
 export type DepthLimitDirectiveOptions = {
   globalLimit?: number; // Global depth limit

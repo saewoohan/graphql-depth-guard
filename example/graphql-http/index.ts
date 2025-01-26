@@ -18,7 +18,6 @@ const startServer = async () => {
   });
 };
 
-// 비동기 함수 실행
 startServer().catch((err) => {
   console.error('Error starting the server:', err);
 });
