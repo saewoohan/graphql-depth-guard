@@ -87,6 +87,8 @@ const schema = depthDirective.transformer(
 The library uses an in-memory cache (`MemoryCache`) by default, which stores cached depths for 60 seconds.
 
 ```ts
+import depthLimitDirective, { MemoryCache } from 'graphql-depth-guard';
+
 const depthDirective = depthLimitDirective({
   globalLimit: 5,
   store: new MemoryCache(60 * 1000),
@@ -99,10 +101,11 @@ To use Redis for caching:
 
 ```ts
 import { createClient } from 'redis';
-import { RedisCache } from './cache/redisCache';
-import depthLimitDirective from 'depth-limit-directive';
+import depthLimitDirective, { RedisCache } from 'graphql-depth-guard';
 
-const redisClient = createClient({ url: 'redis://localhost:6379' });
+const redisClient: RedisClientType = createClient({
+  url: 'redis://localhost:6379',
+});
 await redisClient.connect();
 
 const redisCache = new RedisCache(redisClient, 60 * 1000); // TTL: 60 seconds
@@ -119,8 +122,7 @@ To use `ioredis` for caching:
 
 ```ts
 import Redis from 'ioredis';
-import { RedisCache } from './cache/redisCache';
-import depthLimitDirective from 'depth-limit-directive';
+import depthLimitDirective, { RedisCache } from 'graphql-depth-guard';
 
 const ioredisClient = new Redis('redis://localhost:6379');
 
