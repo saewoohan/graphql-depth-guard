@@ -73,7 +73,7 @@ export const initSchema = async () => {
 
   const depthDirective = depthLimitDirective({
     globalLimit: 5,
-    store: new RedisCache(redisClient, 60000),
+    store: new RedisCache(redisClient),
   });
 
   // Create schema with depth limit directive applied

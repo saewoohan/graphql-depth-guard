@@ -9,9 +9,9 @@ export class RedisCache implements ICache {
   private readonly keyPrefix: string = 'gql-depth-guard::';
   private readonly ttl: number;
 
-  constructor(client: RedisClient, ttl: number) {
+  constructor(client: RedisClient, ttl?: number) {
     this.client = client;
-    this.ttl = ttl;
+    this.ttl = ttl ?? 60000;
   }
 
   async set(key: string, value: number): Promise<void> {
