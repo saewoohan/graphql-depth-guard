@@ -1,15 +1,12 @@
 import { createServer } from 'node:http';
 import { createYoga } from 'graphql-yoga';
-import { initSchema } from './schema'; // Import the schema initialization
+import { schemaWithNoCache } from '../schema/schema';
 
 (async () => {
-  // Initialize the schema
-  const schema = await initSchema();
+  const schema = await schemaWithNoCache();
 
-  // Create Yoga server with the initialized schema
   const yoga = createYoga({ schema });
 
-  // Create HTTP server
   const server = createServer(yoga);
 
   server.listen(4000, () => {

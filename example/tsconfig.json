@@ -2,13 +2,11 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "CommonJS",
-    "outDir": "./dist",
-    "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "declaration": true
+    "outDir": "dist"
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["./example", "./dist", "./node_modules"]
+  "include": ["yoga/index.ts", "schema/schema.ts"],
+  "exclude": ["node_modules", "dist"]
 }
