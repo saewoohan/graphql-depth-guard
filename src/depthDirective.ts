@@ -7,6 +7,7 @@ import {
 import { mapSchema, MapperKind } from '@graphql-tools/utils';
 import { ICache } from './cache/ICache';
 import { generateQueryKey } from './cache/keyGenerator';
+import { calculateDepth } from './calculateDepth';
 
 export type DepthLimitDirectiveOptions = {
   globalLimit?: number; // Global depth limit
@@ -37,25 +38,6 @@ const getValueFromNode = (node: ConstValueNode): any => {
   }
 
   return null;
-};
-
-/**
- * Calculates the depth of a GraphQL query based on its GraphQLResolveInfo.
- * @param info - The GraphQLResolveInfo object containing query details.
- * @returns The depth of the query.
- */
-const calculateDepth = (info: GraphQLResolveInfo): number => {
-  const traverse = (node: any, depth: number): number => {
-    if (!node.selectionSet) return depth;
-
-    return Math.max(
-      ...node.selectionSet.selections.map((child: any) =>
-        traverse(child, depth + 1),
-      ),
-    );
-  };
-
-  return traverse(info.operation, 0);
 };
 
 /**
@@ -145,12 +127,7 @@ export const depthLimitDirective = (options?: DepthLimitDirectiveOptions) => {
           }
 
           fieldConfig.resolve = async function (source, args, context, info) {
-            if (!context._calculatedDepth) {
-              context._calculatedDepth = await calculateDepthWithCache(info);
-            }
-
-            const depth = context._calculatedDepth;
-
+            const depth = await calculateDepthWithCache(info);
             const directiveConfig = fieldConfig.extensions?.depthLimit as
               | { limit: number; message?: string }
               | undefined;

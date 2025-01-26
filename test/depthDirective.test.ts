@@ -3,25 +3,62 @@ import { graphql } from 'graphql';
 import depthLimitDirective, { MemoryCache } from '../src';
 
 const typeDefs = `
-  directive @depthLimit(limit: Int!) on FIELD_DEFINITION
-
   type Query {
-    hello: String @depthLimit(limit: 3)
-    deepField: DeepType @depthLimit(limit: 2)
+    greeting: String @depthLimit(limit: 3)
+    userDetails: User @depthLimit(limit: 2)
+    viewer: Viewer @depthLimit(limit: 3)
   }
 
-  type DeepType {
+  type User {
     name: String
-    nested: DeepType
+    posts: [Post]
+  }
+
+  type Viewer {
+    users: [User]
+  }
+
+  type Post {
+    title: String
+    comments: [Comment]
+  }
+
+  type Comment {
+    id: ID
+    content: String
+    author: String
   }
 `;
 
 const resolvers = {
   Query: {
-    hello: () => 'Hello, world!',
-    deepField: () => ({
-      name: 'Level 1',
-      nested: { name: 'Level 2', nested: null },
+    greeting: () => 'Hello, world!',
+    userDetails: () => ({
+      name: 'John Doe',
+      posts: [
+        {
+          title: 'Post 1',
+          comments: [
+            { id: '1', content: 'Great post!', author: 'Alice' },
+            { id: '2', content: 'Thanks for sharing!', author: 'Bob' },
+          ],
+        },
+      ],
+    }),
+    viewer: () => ({
+      users: [
+        {
+          name: 'Jane Smith',
+          posts: [
+            {
+              title: 'Another Post',
+              comments: [
+                { id: '3', content: 'Nice article!', author: 'Charlie' },
+              ],
+            },
+          ],
+        },
+      ],
     }),
   },
 };
@@ -45,7 +82,7 @@ describe('DepthLimitDirective', () => {
   it('should allow queries within the depth limit', async () => {
     const query = `
         query {
-          hello
+          greeting
         }
       `;
     const result = await graphql({
@@ -54,16 +91,20 @@ describe('DepthLimitDirective', () => {
       contextValue: createContext(),
     });
     expect(result.errors).toBeUndefined();
-    expect(result.data?.hello).toBe('Hello, world!');
+    expect(result.data?.greeting).toBe('Hello, world!');
   });
 
   it('should reject queries exceeding the depth limit', async () => {
     const query = `
         query {
-          deepField {
+          userDetails {
             name
-            nested {
-              name
+            posts {
+              title
+              comments {
+                content
+                author
+              }
             }
           }
         }
@@ -82,7 +123,7 @@ describe('DepthLimitDirective', () => {
   it('should cache depth calculation', async () => {
     const query = `
         query {
-          hello
+          greeting
         }
       `;
     const context = createContext();
@@ -100,5 +141,84 @@ describe('DepthLimitDirective', () => {
       contextValue: context,
     });
     expect(result2.errors).toBeUndefined();
+  });
+
+  it('should handle inline fragments correctly', async () => {
+    const query = `
+      query {
+        viewer {
+          users {
+            name
+            posts {
+              title
+            }
+          }
+        }
+      }
+    `;
+    const result = await graphql({
+      schema,
+      source: query,
+      contextValue: createContext(),
+    });
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('should handle named fragments correctly', async () => {
+    const query = `
+      query {
+        viewer {
+          users {
+            ...userInfo
+          }
+        }
+      }
+
+      fragment userInfo on User {
+        name
+        posts {
+          title
+        }
+      }
+    `;
+    const result = await graphql({
+      schema,
+      source: query,
+      contextValue: createContext(),
+    });
+    expect(result.errors).toBeUndefined();
+  });
+
+  it('should reject queries exceeding the depth limit with fragments', async () => {
+    const query = `
+      fragment postInfo on Post {
+        title
+        comments {
+          content
+          author
+        }
+      }
+  
+      query {
+        viewer {
+          users {
+            name
+            posts {
+              ...postInfo
+            }
+          }
+        }
+      }
+    `;
+    const result = await graphql({
+      schema,
+      source: query,
+      contextValue: createContext(),
+    });
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors?.[0].message).toContain(
+      'Response depth exceeds limit',
+    );
   });
 });
