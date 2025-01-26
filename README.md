@@ -128,13 +128,13 @@ query {
 ### NPM
 
 ```bash
-npm install depth-limit-directive graphql @graphql-tools/utils
+npm install graphql-depth-guard graphql @graphql-tools/utils
 ```
 
 ### Yarn
 
 ```bash
-yarn add depth-limit-directive graphql @graphql-tools/utils
+yarn add graphql-depth-guard graphql @graphql-tools/utils
 ```
 
 ---
