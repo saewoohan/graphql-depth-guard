@@ -22,12 +22,12 @@ export class RedisCache implements ICache {
       await (this.client as IORedisClient).set(
         fullKey,
         serializedValue,
-        'EX',
-        Math.floor(this.ttl / 1000),
+        'PX',
+        this.ttl,
       );
     } else {
       await (this.client as RedisClientType).set(fullKey, serializedValue, {
-        EX: Math.floor(this.ttl / 1000),
+        PX: this.ttl,
       });
     }
   }
