@@ -47,7 +47,6 @@ const getValueFromNode = (node: ConstValueNode): any => {
  * @returns The GraphQL depth limit directive with the required configuration.
  */
 export const depthLimitDirective = (options?: DepthLimitDirectiveOptions) => {
-  // Use the provided store or fall back to MemoryCache
   const cache: ICache | undefined = options?.store;
 
   /**
@@ -65,23 +64,19 @@ export const depthLimitDirective = (options?: DepthLimitDirectiveOptions) => {
     // Safely extract the operation name or use 'anonymous'
     const operationName = info.operation.name?.value ?? 'anonymous';
 
-    // Generate a unique and compact query key
     const queryKey = generateQueryKey(
       operationName,
       info.variableValues,
       info.operation.selectionSet,
     );
 
-    // Check for a cached depth value
     const cachedDepth = await cache.get(queryKey);
     if (cachedDepth !== null) {
       return cachedDepth;
     }
 
-    // Calculate the depth of the query
     const depth = calculateDepth(info);
 
-    // Store the depth in the cache
     await cache.set(queryKey, depth);
 
     return depth;

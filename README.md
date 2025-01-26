@@ -21,6 +21,108 @@ Complexity-based limiters often struggle to precisely identify thresholds for va
 
 ---
 
+## Depth Definition
+
+Query depth is determined by the structure of the response fields, including nested fields and fragments. Here's how depth is defined:
+
+### Example Queries with Depth Calculation
+
+#### Depth: 1
+
+```graphql
+query {
+  hello
+}
+```
+
+#### Depth: 2
+
+```graphql
+query {
+  userDetails {
+    name
+  }
+}
+```
+
+#### Depth: 3 (with nested fields)
+
+```graphql
+query {
+  userDetails {
+    name
+    posts {
+      title
+    }
+  }
+}
+```
+
+#### Depth: 3 (with fragments)
+
+```graphql
+fragment postInfo on Post {
+  title
+  comments {
+    content
+    author
+  }
+}
+
+query {
+  userDetails {
+    posts {
+      ...postInfo
+    }
+  }
+}
+```
+
+---
+
+### Fragment Behavior
+
+- **Inline Fragments** and **Named Fragments** are fully traversed during depth calculation.
+- Fragments do not reset or reduce the depth; they are evaluated as part of the query structure.
+
+#### Example with Nested Fragments
+
+```graphql
+fragment commentInfo on Comment {
+  content
+  author
+}
+
+fragment postInfo on Post {
+  title
+  comments {
+    ...commentInfo
+  }
+}
+
+query {
+  viewer {
+    users {
+      posts {
+        ...postInfo
+      }
+    }
+  }
+}
+```
+
+**Depth Calculation:**
+
+- `viewer` (depth 1)
+- `users` (depth 2)
+- `posts` (depth 3)
+- `postInfo` (depth 4 for `title` and `comments`)
+- `commentInfo` (depth 5 for `content` and `author`)
+
+**Total Depth:** 5
+
+---
+
 ## Installation
 
 ### NPM
@@ -95,9 +197,9 @@ const depthDirective = depthLimitDirective({
 });
 ```
 
-#### 2. **Using Redis Cache**
+#### 2. **Using redis Cache**
 
-To use Redis for caching:
+To use `redis` for caching:
 
 ```ts
 import { createClient } from 'redis';
@@ -134,7 +236,7 @@ const depthDirective = depthLimitDirective({
 });
 ```
 
-#### 3. **No Cache**
+#### 4. **No Cache**
 
 If no store is provided in the options, caching is disabled, and the directive calculates the depth for every query without caching it.
 
@@ -194,13 +296,3 @@ type NestedType {
 ```
 
 ---
-
-## Testing
-
-### Running Tests
-
-To ensure your implementation works as expected:
-
-```bash
-yarn test
-```

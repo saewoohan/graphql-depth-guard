@@ -71,6 +71,5 @@ export const calculateDepth = (info: GraphQLResolveInfo): number => {
     }
   };
 
-  // Start depth calculation from the root operation
   return traverseNode(info.operation, info.fragments, 0);
 };

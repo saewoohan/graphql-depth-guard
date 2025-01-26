@@ -10,7 +10,6 @@ export const generateQueryKey = (
   variables: Record<string, any>,
   selectionSet: any,
 ): string => {
-  // Create a JSON string of the necessary components
   const rawKey = JSON.stringify({ operationName, variables, selectionSet });
 
   // Generate a SHA-256 hash of the raw key
