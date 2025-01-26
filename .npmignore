@@ -1,0 +1,13 @@
+examples/
+test/
+node_modules/
+jest.config.js
+tsconfig.json
+.yarn.lock
+.gitignore
+.prettierrc
+
+!dist/
+!src/
+!README.md
+!package.json
