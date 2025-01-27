@@ -30,9 +30,6 @@
     "build": "tsc",
     "test": "jest"
   },
-  "dependencies": {
-    "@graphql-tools/utils": "^10.7.2"
-  },
   "devDependencies": {
     "@types/jest": "^29.0.0",
     "@types/node": "^22.10.10",
@@ -46,6 +43,7 @@
     "ts-jest": "^29.2.5"
   },
   "peerDependencies": {
-    "graphql": "*"
+    "graphql": "*",
+    "@graphql-tools/utils": "*"
   }
 }
