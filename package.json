@@ -1,6 +1,6 @@
 {
   "name": "graphql-depth-guard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "license": "MIT",
@@ -13,10 +13,6 @@
   "bugs": {
     "url": "https://github.com/saewoohan/graphql-depth-guard/issues"
   },
-  "private": true,
-  "workspaces": [
-    "example"
-  ],
   "homepage": "https://github.com/saewoohan/graphql-depth-guard#readme",
   "keywords": [
     "graphql",
