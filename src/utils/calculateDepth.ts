@@ -1,4 +1,4 @@
-import { GraphQLResolveInfo, GraphQLError, Kind } from 'graphql';
+import { GraphQLResolveInfo, GraphQLError, Kind, FieldNode } from 'graphql';
 
 /**
  * Calculates the depth of a GraphQL query based on its GraphQLResolveInfo.
@@ -71,5 +71,34 @@ export const calculateDepth = (info: GraphQLResolveInfo): number => {
     }
   };
 
-  return traverseNode(info.operation, info.fragments, 0);
+  /**
+   * Determines the starting field node for depth calculation.
+   * If the path has no previous segments, it uses the first field node.
+   * Otherwise, it traverses the path to find the root field node.
+   * @param info - The GraphQLResolveInfo object containing query details.
+   * @returns The starting field node for depth calculation.
+   * @throws GraphQLError - If the starting field node cannot be determined.
+   */
+  let startFieldNode: FieldNode | null = null;
+
+  if (!info.path.prev) {
+    startFieldNode = info.fieldNodes[0] as FieldNode;
+  } else {
+    let path = info.path;
+    while (path.prev) {
+      path = path.prev;
+    }
+    startFieldNode = info.operation.selectionSet.selections.find(
+      (selection) =>
+        selection.kind === Kind.FIELD && selection.name.value === path.key,
+    ) as FieldNode;
+  }
+
+  if (!startFieldNode) {
+    throw new GraphQLError(
+      'Unable to determine starting field for depth calculation',
+    );
+  }
+
+  return traverseNode(startFieldNode, info.fragments, 0);
 };
