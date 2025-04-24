@@ -1,5 +1,4 @@
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { createClient, RedisClientType } from 'redis';
 import depthLimitDirective, { MemoryCache, RedisCache } from '../../src';
 import { resolvers } from './resolvers';
 import { typeDefs } from './typeDefs';
@@ -39,15 +38,12 @@ export const schemaWithMemoryCache = async () => {
   return schema;
 };
 
-export const schemaWithRedis = async () => {
-  const redisClient: RedisClientType = createClient({
-    url: 'redis://localhost:6379',
-  });
-  await redisClient.connect();
+export const schemaWithRedisUrl = async () => {
+  const cache = new RedisCache('redis://localhost:6379');
 
   const depthDirective = depthLimitDirective({
     globalLimit: 5,
-    store: new RedisCache(redisClient),
+    store: cache,
   });
 
   const schema = depthDirective.transformer(
@@ -60,9 +56,9 @@ export const schemaWithRedis = async () => {
   console.log('GraphQL Schema with Graph Depth Limit initialized.');
 
   // Clean up Redis connection on server shutdown
-  process.on('SIGINT', async () => {
+  process.on('SIGINT', () => {
     console.log('Closing Redis connection...');
-    await redisClient.quit();
+    cache.onDestroy();
     console.log('Redis connection closed.');
     process.exit(0);
   });
@@ -70,14 +66,15 @@ export const schemaWithRedis = async () => {
   return schema;
 };
 
-export const schemaWithIoRedis = async () => {
-  const ioredisClient = new Redis('redis://localhost:6379');
-
-  const redisCache = new RedisCache(ioredisClient, 60 * 1000); // TTL: 60 seconds
+export const schemaWithRedisOptions = async () => {
+  const cache = new RedisCache({
+    host: 'localhost',
+    port: 6379,
+  });
 
   const depthDirective = depthLimitDirective({
-    store: redisCache,
     globalLimit: 5,
+    store: cache,
   });
 
   const schema = depthDirective.transformer(
@@ -90,9 +87,41 @@ export const schemaWithIoRedis = async () => {
   console.log('GraphQL Schema with Graph Depth Limit initialized.');
 
   // Clean up Redis connection on server shutdown
-  process.on('SIGINT', async () => {
+  process.on('SIGINT', () => {
     console.log('Closing Redis connection...');
-    await ioredisClient.quit();
+    cache.onDestroy();
+    console.log('Redis connection closed.');
+    process.exit(0);
+  });
+
+  return schema;
+};
+
+export const schemaWithRedisCluster = async () => {
+  const cluster = new Redis.Cluster([
+    { host: 'localhost', port: 6379 },
+    { host: 'localhost', port: 6380 },
+  ]);
+  const cache = new RedisCache(cluster);
+
+  const depthDirective = depthLimitDirective({
+    globalLimit: 5,
+    store: cache,
+  });
+
+  const schema = depthDirective.transformer(
+    makeExecutableSchema({
+      typeDefs: [depthDirective.typeDefs, typeDefs],
+      resolvers,
+    }),
+  );
+
+  console.log('GraphQL Schema with Graph Depth Limit initialized.');
+
+  // Clean up Redis connection on server shutdown
+  process.on('SIGINT', () => {
+    console.log('Closing Redis connection...');
+    cache.onDestroy();
     console.log('Redis connection closed.');
     process.exit(0);
   });

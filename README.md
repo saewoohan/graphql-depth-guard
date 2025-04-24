@@ -197,46 +197,55 @@ const depthDirective = depthLimitDirective({
 });
 ```
 
-#### 2. **Using redis Cache**
+#### 2. **Using Redis Cache**
 
-To use `redis` for caching:
-
-```ts
-import { createClient } from 'redis';
-import depthLimitDirective, { RedisCache } from 'graphql-depth-guard';
-
-const redisClient: RedisClientType = createClient({
-  url: 'redis://localhost:6379',
-});
-await redisClient.connect();
-
-const redisCache = new RedisCache(redisClient, 60 * 1000); // TTL: 60 seconds
-
-const depthDirective = depthLimitDirective({
-  store: redisCache, // Pass Redis cache instance
-  globalLimit: 5,
-});
-```
-
-#### 3. **Using ioredis Cache**
-
-To use `ioredis` for caching:
+The library supports multiple ways to configure Redis connectivity:
 
 ```ts
-import Redis from 'ioredis';
 import depthLimitDirective, { RedisCache } from 'graphql-depth-guard';
+import { Redis } from 'ioredis';
 
-const ioredisClient = new Redis('redis://localhost:6379');
-
-const redisCache = new RedisCache(ioredisClient, 60 * 1000); // TTL: 60 seconds
-
-const depthDirective = depthLimitDirective({
-  store: redisCache, // Pass Redis cache instance
+// Option 1: Using a Redis URL
+const depthDirectiveWithUrl = depthLimitDirective({
   globalLimit: 5,
+  store: new RedisCache('redis://localhost:6379'),
 });
+
+// Option 2: Using Redis configuration object
+const depthDirectiveWithConfig = depthLimitDirective({
+  globalLimit: 5,
+  store: new RedisCache({
+    host: 'localhost',
+    port: 6379,
+    password: 'optional-password',
+  }),
+});
+
+// Option 3: Using an existing Redis client
+const redisClient = new Redis();
+const depthDirectiveWithClient = depthLimitDirective({
+  globalLimit: 5,
+  store: new RedisCache(redisClient),
+});
+
+// Option 4: Using Redis Cluster
+import { Cluster } from 'ioredis';
+const cluster = new Cluster([
+  { host: 'localhost', port: 6379 },
+  { host: 'localhost', port: 6380 },
+]);
+const depthDirectiveWithCluster = depthLimitDirective({
+  globalLimit: 5,
+  store: new RedisCache(cluster),
+});
+
+// Optional: Customize TTL (default: 60000ms)
+const cacheWithCustomTTL = new RedisCache('redis://localhost:6379', 30000);
 ```
 
-#### 4. **No Cache**
+**Note**: When using URL or configuration object options, the Redis connection is managed internally by the RedisCache instance. When using an existing Redis client or cluster, you are responsible for managing the connection lifecycle.
+
+#### 3. **No Cache**
 
 If no store is provided in the options, caching is disabled, and the directive calculates the depth for every query without caching it.
 
