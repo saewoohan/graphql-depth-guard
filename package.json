@@ -14,6 +14,11 @@
     "url": "https://github.com/saewoohan/graphql-depth-guard/issues"
   },
   "homepage": "https://github.com/saewoohan/graphql-depth-guard#readme",
+  "files": [
+    "dist/src/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "keywords": [
     "graphql",
     "depth",
