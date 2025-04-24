@@ -1,15 +1,15 @@
-import { schemaWithIoRedis } from './../schema/schema';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import express from 'express';
 import http from 'http';
+import { schemaWithRedisUrl } from '../schema/schema';
 
 const startServer = async () => {
   const app = express();
   const httpServer = http.createServer(app);
 
-  const schema = await schemaWithIoRedis();
+  const schema = await schemaWithRedisUrl();
 
   const server = new ApolloServer({
     schema,
