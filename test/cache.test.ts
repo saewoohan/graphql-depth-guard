@@ -1,6 +1,6 @@
 import { MemoryCache } from '../src/cache/memCache';
 import { RedisCache } from '../src/cache/redisCache';
-import { createClient, RedisClientType } from 'redis';
+import Redis from 'ioredis';
 
 describe('Cache Tests', () => {
   describe('MemoryCache Tests', () => {
@@ -39,13 +39,12 @@ describe('Cache Tests', () => {
   });
 
   describe('RedisCache Tests', () => {
-    let redisClient: RedisClientType;
+    let redisClient: Redis;
     let redisCache: RedisCache;
 
     beforeAll(async () => {
-      redisClient = createClient({ url: 'redis://localhost:6379' });
-      await redisClient.connect();
-      redisCache = new RedisCache(redisClient, 60 * 1000);
+      redisClient = new Redis('redis://localhost:6379');
+      redisCache = new RedisCache(redisClient);
     });
 
     afterAll(async () => {
@@ -53,7 +52,7 @@ describe('Cache Tests', () => {
     });
 
     beforeEach(async () => {
-      await redisClient.flushAll();
+      await redisClient.flushall();
     });
 
     it('should store and retrieve a value', async () => {
@@ -76,18 +75,43 @@ describe('Cache Tests', () => {
     });
 
     it('should expire keys after TTL', async () => {
-      const shortTTLCache = new RedisCache(redisClient, 100);
-      await shortTTLCache.set('key1', 123);
+      const cache = new RedisCache(
+        {
+          host: 'localhost',
+          port: 6379,
+        },
+        100,
+      );
 
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      let value = await shortTTLCache.get('key1');
-      console.log('50ms: Value:', value);
+      await cache.set('key1', 123);
+
+      let value = await cache.get('key1');
       expect(value).toBe(123);
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      value = await shortTTLCache.get('key1');
-      console.log('200ms: Value:', value);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      value = await cache.get('key1');
       expect(value).toBeNull();
+
+      cache.onDestroy();
+    });
+
+    it('should work with URL connection string', async () => {
+      const urlCache = new RedisCache('redis://localhost:6379');
+      await urlCache.set('key1', 123);
+      const value = await urlCache.get('key1');
+      expect(value).toBe(123);
+      urlCache.onDestroy();
+    });
+
+    it('should work with Redis options', async () => {
+      const optionsCache = new RedisCache({
+        host: 'localhost',
+        port: 6379,
+      });
+      await optionsCache.set('key1', 123);
+      const value = await optionsCache.get('key1');
+      expect(value).toBe(123);
+      optionsCache.onDestroy();
     });
   });
 });
